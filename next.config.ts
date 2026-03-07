@@ -8,13 +8,8 @@ const nextConfig: NextConfig = {
   compress: true,
   poweredByHeader: false,
 
-  webpack(config, { isServer }) {
-    // Mermaid는 클라이언트 전용 라이브러리 — 서버 번들 제외
-    if (isServer) {
-      config.externals = [...(config.externals ?? []), "mermaid"];
-    }
-    return config;
-  },
+  // Mermaid는 클라이언트 전용 라이브러리 — 서버 번들 제외 (Next.js 16 Turbopack 호환)
+  serverExternalPackages: ["mermaid"],
 };
 
 export default nextConfig;
