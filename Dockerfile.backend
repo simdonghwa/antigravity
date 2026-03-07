@@ -1,0 +1,55 @@
+# ═══════════════════════════════════════════════════════════
+# SMALL AX AGENT — 백엔드 (FastAPI + Python 3.12)
+# ═══════════════════════════════════════════════════════════
+
+FROM python:3.12-slim AS base
+
+# 시스템 패키지 (onnxruntime 빌드용)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        gcc \
+        g++ \
+        curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# ── 의존성 레이어 (캐시 효율) ─────────────────────────────
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# ── ChromaDB ONNX 모델 빌드 시 사전 다운로드 ─────────────
+# → 컨테이너 재시작 시 콜드스타트 없음
+RUN python -c "\
+from chromadb.utils.embedding_functions.onnx_mini_lm_l6_v2 import OnnxMiniLm_L6_V2; \
+OnnxMiniLm_L6_V2()" 2>/dev/null || \
+    python -c "\
+import chromadb; \
+client = chromadb.Client(); \
+col = client.get_or_create_collection('warmup'); \
+col.upsert(ids=['1'], documents=['warmup']); \
+col.query(query_texts=['warmup'], n_results=1)" 2>/dev/null || true
+
+# ── 소스 복사 ────────────────────────────────────────────
+COPY config.py run.py ./
+COPY api/     api/
+COPY db/      db/
+COPY graph/   graph/
+COPY prompts/ prompts/
+COPY rag/     rag/
+COPY export/  export/
+
+# ── 볼륨 마운트 디렉터리 사전 생성 ───────────────────────
+RUN mkdir -p /app/data /app/chroma_db
+
+# ── 환경변수 기본값 ──────────────────────────────────────
+ENV PYTHONIOENCODING=utf-8 \
+    PYTHONUNBUFFERED=1 \
+    HOST=0.0.0.0 \
+    PORT=8000
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+CMD ["python", "run.py"]

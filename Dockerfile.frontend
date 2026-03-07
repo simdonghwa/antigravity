@@ -1,0 +1,54 @@
+# ═══════════════════════════════════════════════════════════
+# SMALL AX AGENT — 프론트엔드 (Next.js 16 + Node 20)
+# ═══════════════════════════════════════════════════════════
+
+# ── 1단계: 의존성 설치 ────────────────────────────────────
+FROM node:20-alpine AS deps
+WORKDIR /app
+
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+
+# ── 2단계: 빌드 ──────────────────────────────────────────
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# 백엔드 URL (빌드 시 주입, NEXT_PUBLIC_ → 클라이언트 번들에 포함)
+ARG NEXT_PUBLIC_API_URL=http://localhost:8000
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_TELEMETRY_DISABLED=1
+# standalone 모드로 빌드 (이미지 크기 최적화)
+ENV DOCKER_BUILD=1
+
+RUN npm run build
+
+
+# ── 3단계: 프로덕션 실행 (standalone) ────────────────────
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+
+# 비-root 유저 (보안)
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser  --system --uid 1001 nextjs
+
+# standalone 빌드 결과물만 복사 (node_modules 불필요)
+COPY --from=builder /app/public                    ./public
+COPY --from=builder /app/.next/standalone          ./
+COPY --from=builder /app/.next/static              ./.next/static
+
+USER nextjs
+
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
+    CMD wget -qO- http://localhost:3000/ > /dev/null || exit 1
+
+CMD ["node", "server.js"]
