@@ -20,23 +20,9 @@ AsyncSessionLocal = async_sessionmaker(
 
 
 async def init_db() -> None:
-    """테이블 생성 + RAG 지식베이스 시딩 (앱 시작 시 1회)"""
-    import asyncio
-    import logging
-    logger = logging.getLogger(__name__)
-
+    """테이블 생성 (앱 시작 시 1회) — RAG 시딩은 main.py에서 백그라운드로 실행"""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-
-    # RAG 시딩은 동기 작업이므로 스레드 풀에서 실행
-    loop = asyncio.get_event_loop()
-    try:
-        from rag import rag_seed
-        seeded = await loop.run_in_executor(None, rag_seed)
-        if seeded:
-            logger.info("RAG knowledge base seeded successfully")
-    except Exception as e:
-        logger.warning(f"RAG seed skipped (non-fatal): {e}")
 
 
 async def get_db():

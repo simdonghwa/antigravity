@@ -2,6 +2,7 @@
 SMALL AX AGENT — FastAPI 메인 앱
 """
 
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
@@ -24,11 +25,24 @@ logger = logging.getLogger(__name__)
 
 # ── 앱 라이프사이클 ───────────────────────────────────────
 
+async def _seed_rag_background() -> None:
+    """RAG 시딩을 백그라운드에서 실행 — 서버 시작을 블로킹하지 않음"""
+    loop = asyncio.get_event_loop()
+    try:
+        from rag import rag_seed
+        seeded = await loop.run_in_executor(None, rag_seed)
+        if seeded:
+            logger.info("✅ RAG knowledge base seeded in background")
+    except Exception as e:
+        logger.warning(f"Background RAG seed failed (non-fatal): {e}")
+
+
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     logger.info("🚀 SMALL AX AGENT starting...")
     await init_db()
     logger.info("✅ DB initialized")
+    asyncio.create_task(_seed_rag_background())  # 헬스체크 블로킹 없이 백그라운드 실행
     yield
     logger.info("👋 SMALL AX AGENT shutting down")
 
