@@ -57,3 +57,5 @@ chroma_db/
 .idea/
 *.suo
 *.user
+
+.vercel

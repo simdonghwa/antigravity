@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import '../styles/globals.css';
 
 export const metadata: Metadata = {
-  title: 'CheckPoint | 소상공인 경영 인사이트',
-  description: '매출 분석부터 지원사업 매칭까지, 사장님을 위한 경영 비서',
+  title: 'Small Ax Agent',
+  description: '소상공인을 위한 AI 업무 자동화 설계 에이전트',
 };
 
 export default function RootLayout({
