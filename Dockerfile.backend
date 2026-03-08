@@ -40,7 +40,7 @@ COPY export/       export/
 COPY notification/ notification/
 
 # ── 볼륨 마운트 디렉터리 사전 생성 ───────────────────────
-RUN mkdir -p /app/data /app/chroma_db
+RUN mkdir -p /app/data /app/chroma_db /data /data/chroma_db
 
 # ── 환경변수 기본값 ──────────────────────────────────────
 ENV PYTHONIOENCODING=utf-8 \
@@ -49,8 +49,5 @@ ENV PYTHONIOENCODING=utf-8 \
     PORT=8000
 
 EXPOSE 8000
-
-HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
 
 CMD ["python", "run.py"]
