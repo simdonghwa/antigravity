@@ -31,12 +31,13 @@ col.query(query_texts=['warmup'], n_results=1)" 2>/dev/null || true
 
 # ── 소스 복사 ────────────────────────────────────────────
 COPY config.py run.py ./
-COPY api/     api/
-COPY db/      db/
-COPY graph/   graph/
-COPY prompts/ prompts/
-COPY rag/     rag/
-COPY export/  export/
+COPY api/          api/
+COPY db/           db/
+COPY graph/        graph/
+COPY prompts/      prompts/
+COPY rag/          rag/
+COPY export/       export/
+COPY notification/ notification/
 
 # ── 볼륨 마운트 디렉터리 사전 생성 ───────────────────────
 RUN mkdir -p /app/data /app/chroma_db
