@@ -43,11 +43,8 @@ COPY notification/ notification/
 RUN mkdir -p /app/data /app/chroma_db /data /data/chroma_db
 
 # ── 환경변수 기본값 ──────────────────────────────────────
+# PORT는 Railway가 런타임에 주입 — 여기서 고정하지 않음
 ENV PYTHONIOENCODING=utf-8 \
-    PYTHONUNBUFFERED=1 \
-    HOST=0.0.0.0 \
-    PORT=8000
-
-EXPOSE 8000
+    PYTHONUNBUFFERED=1
 
 CMD ["python", "run.py"]
