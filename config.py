@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     # ── Server ───────────────────────────────────────────────
     host: str = "0.0.0.0"
     port: int = 8000
-    debug: bool = True
+    debug: bool = False
     cors_origins: str = "http://localhost:3000,http://localhost:5173"
 
     @property
